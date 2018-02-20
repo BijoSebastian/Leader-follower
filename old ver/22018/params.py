@@ -7,8 +7,8 @@ Parameters for human following robot
 """
 
 # RRT prameters
-windowSize = 30.0 # The operating window for each D.O.F
-numNodes = 50 #Maximum number of nodes
+windowSize = 25#100.0 # The operating window for each D.O.F
+numNodes = 700 #Maximum number of nodes
 stepSize = 1.0 # For the tree growth step
 epsilon = 1.0#To pad the obsatcles
 

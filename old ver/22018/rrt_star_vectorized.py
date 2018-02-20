@@ -262,64 +262,29 @@ def RRT_star(start, goal, obstacles):
        if params.old_start != start:
            #New start
            
-           # Compute the distance of all nodes in the Tree to the new start node: 
-           distArr = np.sqrt((params.pyVec - start[1])**2 + (params.pxVec - start[0])**2) 
-           
-           # Get collision info for all nodes in the Tree to the new start node:
-           collisionvect = checkCollisionVect(start)
-           
-           # Address the special case: If all the nodes cause collision
-           if np.all(collisionvect):
-               print('failed') 
-               return([])
-           
-           # If not choose the right parent
-           # Find the indices of the nodes on the tree which don't have collisions:
-           idxNoCollision = np.where(~collisionvect)[0]
-           
-           # Compute cost for all non colliding nodes to new node          
-           temp_cost = params.pCost[idxNoCollision] +  distArr[idxNoCollision]
-           
-           #Find the parent id  and cost based on the minimum cost           
-           cost = temp_cost[np.argmin(temp_cost)]+1
-           
-           #Add this cost to all nodes 
-           params.pCost += cost
-           
+           #Distance form new start to old start
+           dist = np.sqrt((params.pyVec[params.old_start_id] - start[1])**2 + (params.pxVec[params.old_start_id] - start[0])**2) 
+           #Update all costs with that value
+           params.pCost += dist
            #Add new start
-           node_append(start[0], start[1], None, 0.0)           
+           node_append(start[0], start[1], None, 0.0)
+           #upend old starts parent
+           params.pparents[params.old_start_id] = len(params.pxVec) - 1
            params.old_start_id = len(params.pxVec) - 1
-           
+           #Yes we need a -1, because say the length of an array is 3 and the index number of last element is only 2 
+           #Rewire
+           #compute new collision vector based on new rand
+           collisionvect = checkCollisionVect(start)
+           #compute the distance of all nodes in the Tree to new rand
+           distArr = np.sqrt((params.pyVec - start[1])**2 + (params.pxVec - start[0])**2)                
+           # Choose the right parent
+           # Find the indices of the nodes on the tree which don't have collisions:
+           idxNoCollision = np.where(~collisionvect)[0]              
            #Compute new cost for all that do not collide
            newCost = np.full((len(params.pxVec)), np.inf)
-           newCost[idxNoCollision] = distArr[idxNoCollision]  
-             
+           newCost[idxNoCollision] = distArr[idxNoCollision]               
            #Change parent for all that is closer
-           the_changed = np.where(newCost < params.pCost)[0]          
-           params.pparents[the_changed] = len(params.pxVec) - 1
-           params.pCost[the_changed] = newCost[the_changed]
-           while not len(the_changed) == 0:
-               idx  = the_changed[0]
-               the_changed = np.delete(the_changed, 0)                             
-               updn = [params.pxVec[idx], params.pyVec[idx]]
-               
-               # Compute the distance of all nodes in the Tree to the update  node: 
-               distArr = np.sqrt((params.pyVec - updn[1])**2 + (params.pxVec - updn[0])**2) 
-               # Get collision info for all nodes in the Tree to the update start node:
-               collisionvect = checkCollisionVect(updn)                             
-               
-               #Compute new cost for all that do not collide
-               newCost = np.full((len(params.pxVec)), np.inf)
-               newCost[idxNoCollision] = params.pCost[idx] + distArr[idxNoCollision]  
-               newCost[params.pparents[idx]] = np.inf
-               
-               #Change parent for all that is closer
-               temp = np.where(newCost < params.pCost)[0] 
-               params.pparents[temp] = idx
-               params.pCost[temp] = newCost[temp]              
-               if not len(temp) == 0:
-                    the_changed = np.concatenate(the_changed, temp)
-
+           params.pparents[newCost < params.pCost] = len(params.pxVec) - 1
            #Update old
            params.old_start = start
            
@@ -328,13 +293,9 @@ def RRT_star(start, goal, obstacles):
            #Replan
            reachedGoal = 0
            params.old_goal = goal
-       else:           
-           reachedGoal = 0
-           ##No Replan you found goal
-           if not params.old_goal_id == None:
-               if params.pxVec[params.old_goal_id] == goal[0] and params.pyVec[params.old_goal_id] == goal[1]:
-                   reachedGoal = params.old_goal_id
-               
+       else:
+           #No Replan
+           reachedGoal = params.old_goal_id
             
     #Fatten the obstacles, asuming the obstcles do change with time
     fat_obstacles(obstacles)
@@ -350,7 +311,7 @@ def RRT_star(start, goal, obstacles):
             print('Optimising, num nodes: ', len(params.pxVec), 'iterno: ', numiter)              
             #This gets activated if you allow it to run beyond reaching the goal
             
-        #Every 50 new node check if goal can be reached 
+        #Every 10 new node check if goal can be reached 
         #(This is needed so that it randomly smaples the space initially)       
         if (numiter % 50 == 0 ) or (len(params.pxVec) > params.numNodes) :             
                 rand = [goal[0], goal[1]]            
@@ -433,21 +394,21 @@ def RRT_star(start, goal, obstacles):
 ##Uncomment for testing purposes
 ## Finally we should run the test
 #if __name__ == '__main__':
-##   Trial obstacles
+#    #Trial obstacles
 #    obes = np.array([[20,0,20,60],
 #                     [60,60,80,20],
 #                     [20,0,80,30],
 #                     [60,40,60,85]])    
-#    
 #    start = [0.0, 0.0] # Start
 #    goal = [50.0, 5.0] # Goal
+#
 #    waypoint = RRT_star(start, goal, obes)
 #    print('way point: ', waypoint)
 #    start = [10.0, 25.0] # Start
-#    goal = [50.0, 5.0] # Goal
+#    goal = [45.0, 30.0] # Goal
 #    waypoint = RRT_star(start, goal, obes)  
 #    print('way point: ', waypoint)  
-#    start = [10.0, 25.0] # Start.
+#    start = [10.0, 25.0] # Start
 #    goal = [55.0, 80.0] # Goal
 #    waypoint = RRT_star(start, goal, obes)  
 #    print('way point: ', waypoint) 

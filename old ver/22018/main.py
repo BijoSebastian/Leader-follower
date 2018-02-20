@@ -311,7 +311,7 @@ def main():
                 #Planning
                 if i == 0:
                     #Plan path
-                    path = rrt_star_vectorized.RRT_star([x,y], goalPosition[0:2],  obstacles)                      
+                    path = rrt_star_vectorized.RRT_star([x,y], goalPosition[0:2],  obstacles) 
                     
                 else:                    
                     s_dist = np.sqrt((params.old_start[1] - y)**2 + (params.old_start[0] - x)**2)
@@ -320,7 +320,8 @@ def main():
                     if max(s_dist, g_dist) > params.stepSize:
                         
                         #Plan path
-                        path = rrt_star_vectorized.RRT_star([x,y], goalPosition[0:2],  obstacles)                          
+                        path = rrt_star_vectorized.RRT_star([x,y], goalPosition[0:2],  obstacles)  
+               
                 if len(path) == 0:
                     time.sleep(0.5)  
                     continue
